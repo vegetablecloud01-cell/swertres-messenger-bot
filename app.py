@@ -43,30 +43,29 @@ def webhook():
     return "EVENT_RECEIVED", 200
 
 def send_lotto_results(recipient_id):
-    # Fetch latest data from GitHub static raw storage
     try:
         response = requests.get(GITHUB_JSON_URL, timeout=5)
         lotto_data = response.json()
         
         reply_text = (
-    f"🎯 Swertres (3D Lotto) Results today:\n\n"
-    f"🕒 2:00 PM: {lotto_data.get('2pm', 'No result')}\n"
-    f"🕒 5:00 PM: {lotto_data.get('5pm', 'No result')}\n"
-    f"🕒 9:00 PM: {lotto_data.get('9pm', 'No result')}\n\n"
-    f"Disclaimer: Always cross-verify combinations with official PCSO channels."
-)
-
+            f"🎯 PCSO Swertres Results Today:\n\n"
+            f"🕒 2:00 PM: {lotto_data.get('2pm', 'No result')}\n"
+            f"🕒 5:00 PM: {lotto_data.get('5pm', 'No result')}\n"
+            f"🕒 9:00 PM: {lotto_data.get('9pm', 'No result')}\n\n"
+            f"Updated as of: {lotto_data.get('updated', 'N/A')}\n\n"
+            f"Disclaimer: Always cross-verify combinations with official PCSO channels."
+        )
     except Exception:
-        reply_text = "Sorry, I am temporarily unable to fetch the live lotto results. Please try again later!"
+        reply_text = "Pasensya na, unable to fetch the live lotto results right now. Please try again in a few minutes!"
 
-    # Send message back via Meta Graph API
-    url = f"https://facebook.com{PAGE_ACCESS_TOKEN}"
+    # FIXED: Slashes and parameters are cleanly separated from the token variable
+    url = "https://facebook.com"
     payload = {
         "recipient": {"id": recipient_id},
         "message": {"text": reply_text}
     }
+    params = {"access_token": PAGE_ACCESS_TOKEN}
     headers = {"Content-Type": "application/json"}
-    requests.post(url, json=payload, headers=headers)
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    
+    # Send the request cleanly passing access token through secure query parameters
+    requests.post(url, json=payload, params=params, headers=headers)
