@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 def scrape_swertres():
     # URL of a reliable live lotto result archive
-    url = "https://lottopinas.com"
+    url = "https://philnews.ph/pcso-lotto-result/swertres-result/"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
     results = {"11am": "No result", "4pm": "No result", "9pm": "No result", "updated": ""}
