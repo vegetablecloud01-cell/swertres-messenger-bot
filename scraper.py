@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 def scrape_swertres():
     # Target informative domain
-    url = "https://pcsolotto.org"
+    url = "https://philnews.ph/pcso-lotto-result/swertres-result/"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
     # Base fallback structure
