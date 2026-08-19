@@ -1,13 +1,14 @@
 import os
 import json
 import requests
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
 VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "MY_SECURE_TOKEN_123")
 PAGE_ACCESS_TOKEN = os.environ.get("PAGE_ACCESS_TOKEN")
-GITHUB_JSON_URL = "https://githubusercontent.com"
+# Make sure your real raw GitHub data link is placed below!
+GITHUB_JSON_URL = "https://raw.githubusercontent.com/vegetablecloud01-cell/swertres-messenger-bot/refs/heads/main/results.json"
 
 @app.route('/', methods=['GET'])
 def verify():
@@ -23,26 +24,29 @@ def verify():
 @app.route('/', methods=['POST'])
 def webhook():
     data = request.get_json()
-    print(f"--- NEW INCOMING MESSAGING EVENT ---")
-    print(json.dumps(data, indent=2))  # This prints the raw Facebook message to your logs
+    print("--- INCOMING FACEBOOK PACKET ---")
+    print(json.dumps(data))
     
-    if data.get("object") == "page":
-        for entry in data.get("entry", []):
-            for messaging_event in entry.get("messaging", []):
-                sender_id = messaging_event["sender"]["id"]
-                message = messaging_event.get("message", {})
-                text = message.get("text", "").lower()
-                
-                print(f"User {sender_id} sent text: '{text}'")
-                
-                # Check keywords
-                keywords = ["swertres", "result", "resulta", "3d", "hearing"]
-                if any(keyword in text for keyword in keywords):
-                    print("--> Keyword matched! Triggering send_lotto_results...")
-                    send_lotto_results(sender_id)
-                else:
-                    print("--> Message did not contain any trigger keywords.")
-                    
+    # Super flexible parser - extracts message regardless of nesting structure
+    try:
+        if data and "entry" in data:
+            for entry in data["entry"]:
+                if "messaging" in entry:
+                    for messaging_event in entry["messaging"]:
+                        sender_id = messaging_event["sender"]["id"]
+                        
+                        # Verify it's a real text message event
+                        if "message" in messaging_event and "text" in messaging_event["message"]:
+                            user_text = messaging_event["message"]["text"].lower()
+                            print(f"Captured text from {sender_id}: {user_text}")
+                            
+                            # Trigger phrases
+                            keywords = ["swertres", "result", "resulta", "3d", "hearing", "nakatama"]
+                            if any(k in user_text for k in keywords):
+                                send_lotto_results(sender_id)
+    except Exception as e:
+        print(f"Parsing skip error: {e}")
+        
     return "EVENT_RECEIVED", 200
 
 def send_lotto_results(recipient_id):
@@ -55,13 +59,15 @@ def send_lotto_results(recipient_id):
             f"🕒 2:00 PM: {lotto_data.get('2pm', 'No result')}\n"
             f"🕒 5:00 PM: {lotto_data.get('5pm', 'No result')}\n"
             f"🕒 9:00 PM: {lotto_data.get('9pm', 'No result')}\n\n"
+            f"Updated as of: {lotto_data.get('updated', 'N/A')}\n\n"
             f"Disclaimer: Always cross-verify combinations with official PCSO channels."
         )
     except Exception as e:
-        print(f"ERROR: Failed to read results.json from GitHub: {e}")
-        reply_text = "Pasensya na, unable to fetch results right now."
+        print(f"GitHub Fetch Error: {e}")
+        reply_text = "Pasensya na, unable to fetch the live lotto results right now."
 
-    url = "https://facebook.com"
+    # Meta Graph Messaging endpoint
+    url = f"https://facebook.com"
     payload = {
         "recipient": {"id": recipient_id},
         "message": {"text": reply_text}
@@ -69,9 +75,10 @@ def send_lotto_results(recipient_id):
     params = {"access_token": PAGE_ACCESS_TOKEN}
     headers = {"Content-Type": "application/json"}
     
-    print(f"Sending reply payload to user {recipient_id}...")
-    fb_response = requests.post(url, json=payload, params=params, headers=headers)
-    
-    # This logs exactly what Facebook says back to us
-    print(f"Facebook API Status Code: {fb_response.status_code}")
-    print(f"Facebook API Response Body: {fb_response.text}")
+    print(f"Sending request packet to Meta...")
+    res = requests.post(url, json=payload, params=params, headers=headers)
+    print(f"Meta Response Code: {res.status_code}")
+    print(f"Meta Server Text: {res.text}")
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
