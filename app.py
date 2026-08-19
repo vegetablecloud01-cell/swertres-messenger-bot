@@ -5,106 +5,15 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Environment Variables (Managed inside Render Dashboard)
+# Environment Variables (Set these in Render Dashboard)
 VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "MY_SECURE_TOKEN_123")
 PAGE_ACCESS_TOKEN = os.environ.get("PAGE_ACCESS_TOKEN")
-# ⚠️ REPLACE THIS with your actual public repository raw JSON link!
-GITHUB_JSON_URL = "https://raw.githubusercontent.com/vegetablecloud01-cell/swertres-messenger-bot/refs/heads/main/results.json"
-
-@app.route('/', methods=['GET'])
-def verify():
-    # Webhook verification step for Meta Developer Dashboard
-    mode = request.args.get("hub.mode")
-    token = request.args.get("hub.verify_token")
-    challenge = request.args.get("hub.challenge")
-    
-    if mode and token:
-        if mode == "subscribe" and token == VERIFY_TOKEN:
-            return challenge, 200
-        return "Verification token mismatch", 403
-    return "Bot Server Online", 200
-
-@app.route('/', methods=['POST'])
-def webhook():
-    data = request.get_json()
-    print("--- INCOMING FACEBOOK PACKET ---")
-    print(json.dumps(data))
-    
-    # Flexible parser to extract messaging text events safely
-    try:
-        if data and "entry" in data:
-            for entry in data["entry"]:
-                if "messaging" in entry:
-                    for messaging_event in entry["messaging"]:
-                        sender_id = messaging_event["sender"]["id"]
-                        
-                        # Verify the packet contains a text string
-                        if "message" in messaging_event and "text" in messaging_event["message"]:
-                            user_text = messaging_event["message"]["text"].lower()
-                            print(f"Captured text from {sender_id}: '{user_text}'")
-                            
-                            # Standard Philippine Lotto search triggers
-                            keywords = ["swertres", "result", "resulta", "3d", "hearing", "nakatama"]
-                            if any(k in user_text for k in keywords):
-                                print("--> Match found! Dispatching numbers...")
-                                send_lotto_results(sender_id)
-                            else:
-                                print("--> No keyword triggers matched.")
-    except Exception as e:
-        print(f"Packet parsing exception skipped: {e}")
-        
-    return "EVENT_RECEIVED", 200
-
-def send_lotto_results(recipient_id):
-    try:
-        # Fetch the real-time combinations tracked by your scraper
-        response = requests.get(GITHUB_JSON_URL, timeout=5)
-        lotto_data = response.json()
-        
-        reply_text = (
-            f"🎯 PCSO Swertres Results Today:\n\n"
-            f"🕒 2:00 PM: {lotto_data.get('2pm', 'No result')}\n"
-            f"🕒 5:00 PM: {lotto_data.get('5pm', 'No result')}\n"
-            f"🕒 9:00 PM: {lotto_data.get('9pm', 'No result')}\n\n"
-            f"Updated as of: {lotto_data.get('updated', 'N/A')}\n\n"
-            f"Disclaimer: Always cross-verify combinations with official PCSO channels."
-        )
-    except Exception as e:
-        print(f"GitHub JSON Retrieval Error: {e}")
-        reply_text = "Pasensya na, unable to fetch the live lotto results right now. Please try again later!"
-
-    # Corrected Graph API endpoint structure passing the access token as a param string
-    url = "https://facebook.com"
-    payload = {
-        "recipient": {"id": recipient_id},
-        "message": {"text": reply_text}
-    }
-    params = {"access_token": PAGE_ACCESS_TOKEN}
-    headers = {"Content-Type": "application/json"}
-    
-    print(f"Sending response payload to user {recipient_id}...")
-    res = requests.post(url, json=payload, params=params, headers=headers)
-    print(f"Meta Server Response Status: {res.status_code}")
-    print(f"Meta Server Response Body: {res.text}")
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-import os
-import json
-import requests
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-# Environment Variables (Managed inside Render Dashboard)
-VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "MY_SECURE_TOKEN_123")
-PAGE_ACCESS_TOKEN = os.environ.get("PAGE_ACCESS_TOKEN")
-# ⚠️ REPLACE THIS with your actual public repository raw JSON link!
+# Replace with your actual public repository raw JSON link
 GITHUB_JSON_URL = "https://githubusercontent.com"
 
 @app.route('/', methods=['GET'])
 def verify():
-    # Webhook verification step for Meta Developer Dashboard
+    # Webhook verification step for Meta for Developers setup
     mode = request.args.get("hub.mode")
     token = request.args.get("hub.verify_token")
     challenge = request.args.get("hub.challenge")
@@ -113,154 +22,50 @@ def verify():
         if mode == "subscribe" and token == VERIFY_TOKEN:
             return challenge, 200
         return "Verification token mismatch", 403
-    return "Bot Server Online", 200
+    return "Hello World", 200
 
 @app.route('/', methods=['POST'])
 def webhook():
     data = request.get_json()
-    print("--- INCOMING FACEBOOK PACKET ---")
-    print(json.dumps(data))
     
-    # Flexible parser to extract messaging text events safely
-    try:
-        if data and "entry" in data:
-            for entry in data["entry"]:
-                if "messaging" in entry:
-                    for messaging_event in entry["messaging"]:
-                        sender_id = messaging_event["sender"]["id"]
-                        
-                        # Verify the packet contains a text string
-                        if "message" in messaging_event and "text" in messaging_event["message"]:
-                            user_text = messaging_event["message"]["text"].lower()
-                            print(f"Captured text from {sender_id}: '{user_text}'")
-                            
-                            # Standard Philippine Lotto search triggers
-                            keywords = ["swertres", "result", "resulta", "3d", "hearing", "nakatama"]
-                            if any(k in user_text for k in keywords):
-                                print("--> Match found! Dispatching numbers...")
-                                send_lotto_results(sender_id)
-                            else:
-                                print("--> No keyword triggers matched.")
-    except Exception as e:
-        print(f"Packet parsing exception skipped: {e}")
-        
+    if data.get("object") == "page":
+        for entry in data.get("entry", []):
+            for messaging_event in entry.get("messaging", []):
+                sender_id = messaging_event["sender"]["id"]
+                message = messaging_event.get("message", {})
+                text = message.get("text", "").lower()
+                
+                # Check for trigger keywords
+                keywords = ["swertres", "result", "resulta", "3d", "hearing"]
+                if any(keyword in text for keyword in keywords):
+                    send_lotto_results(sender_id)
+                    
     return "EVENT_RECEIVED", 200
 
 def send_lotto_results(recipient_id):
-    try:
-        # Fetch the real-time combinations tracked by your scraper
-        response = requests.get(GITHUB_JSON_URL, timeout=5)
-        lotto_data = response.json()
-        
-        reply_text = (
-            f"🎯 PCSO Swertres Results Today:\n\n"
-            f"🕒 2:00 PM: {lotto_data.get('2pm', 'No result')}\n"
-            f"🕒 5:00 PM: {lotto_data.get('5pm', 'No result')}\n"
-            f"🕒 9:00 PM: {lotto_data.get('9pm', 'No result')}\n\n"
-            f"Updated as of: {lotto_data.get('updated', 'N/A')}\n\n"
-            f"Disclaimer: Always cross-verify combinations with official PCSO channels."
-        )
-    except Exception as e:
-        print(f"GitHub JSON Retrieval Error: {e}")
-        reply_text = "Pasensya na, unable to fetch the live lotto results right now. Please try again later!"
-
-    # Corrected Graph API endpoint structure passing the access token as a param string
-    url = "https://facebook.com"
-    payload = {
-        "recipient": {"id": recipient_id},
-        "message": {"text": reply_text}
-    }
-    params = {"access_token": PAGE_ACCESS_TOKEN}
-    headers = {"Content-Type": "application/json"}
-    
-    print(f"Sending response payload to user {recipient_id}...")
-    res = requests.post(url, json=payload, params=params, headers=headers)
-    print(f"Meta Server Response Status: {res.status_code}")
-    print(f"Meta Server Response Body: {res.text}")
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-import os
-import json
-import requests
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "MY_SECURE_TOKEN_123")
-PAGE_ACCESS_TOKEN = os.environ.get("PAGE_ACCESS_TOKEN")
-# Make sure your real raw GitHub data link is placed below!
-GITHUB_JSON_URL = "https://raw.githubusercontent.com/vegetablecloud01-cell/swertres-messenger-bot/refs/heads/main/results.json"
-
-@app.route('/', methods=['GET'])
-def verify():
-    mode = request.args.get("hub.mode")
-    token = request.args.get("hub.verify_token")
-    challenge = request.args.get("hub.challenge")
-    if mode and token:
-        if mode == "subscribe" and token == VERIFY_TOKEN:
-            return challenge, 200
-        return "Verification token mismatch", 403
-    return "Bot Server Online", 200
-
-@app.route('/', methods=['POST'])
-def webhook():
-    data = request.get_json()
-    print("--- INCOMING FACEBOOK PACKET ---")
-    print(json.dumps(data))
-    
-    # Super flexible parser - extracts message regardless of nesting structure
-    try:
-        if data and "entry" in data:
-            for entry in data["entry"]:
-                if "messaging" in entry:
-                    for messaging_event in entry["messaging"]:
-                        sender_id = messaging_event["sender"]["id"]
-                        
-                        # Verify it's a real text message event
-                        if "message" in messaging_event and "text" in messaging_event["message"]:
-                            user_text = messaging_event["message"]["text"].lower()
-                            print(f"Captured text from {sender_id}: {user_text}")
-                            
-                            # Trigger phrases
-                            keywords = ["swertres", "result", "resulta", "3d", "hearing", "nakatama"]
-                            if any(k in user_text for k in keywords):
-                                send_lotto_results(sender_id)
-    except Exception as e:
-        print(f"Parsing skip error: {e}")
-        
-    return "EVENT_RECEIVED", 200
-
-def send_lotto_results(recipient_id):
+    # Fetch latest data from GitHub static raw storage
     try:
         response = requests.get(GITHUB_JSON_URL, timeout=5)
         lotto_data = response.json()
         
         reply_text = (
-            f"🎯 PCSO Swertres Results Today:\n\n"
-            f"🕒 2:00 PM: {lotto_data.get('2pm', 'No result')}\n"
-            f"🕒 5:00 PM: {lotto_data.get('5pm', 'No result')}\n"
+            f"🎯 Swertres (3D Lotto) Results today:\n\n"
+            f"🕒 11:00 AM: {lotto_data.get('11am', 'No result')}\n"
+            f"🕒 4:00 PM: {lotto_data.get('4pm', 'No result')}\n"
             f"🕒 9:00 PM: {lotto_data.get('9pm', 'No result')}\n\n"
-            f"Updated as of: {lotto_data.get('updated', 'N/A')}\n\n"
             f"Disclaimer: Always cross-verify combinations with official PCSO channels."
         )
-    except Exception as e:
-        print(f"GitHub Fetch Error: {e}")
-        reply_text = "Pasensya na, unable to fetch the live lotto results right now."
+    except Exception:
+        reply_text = "Sorry, I am temporarily unable to fetch the live lotto results. Please try again later!"
 
-    # Meta Graph Messaging endpoint
-    url = f"https://facebook.com"
+    # Send message back via Meta Graph API
+    url = f"https://facebook.com{PAGE_ACCESS_TOKEN}"
     payload = {
         "recipient": {"id": recipient_id},
         "message": {"text": reply_text}
     }
-    params = {"access_token": PAGE_ACCESS_TOKEN}
     headers = {"Content-Type": "application/json"}
-    
-    print(f"Sending request packet to Meta...")
-    res = requests.post(url, json=payload, params=params, headers=headers)
-    print(f"Meta Response Code: {res.status_code}")
-    print(f"Meta Server Text: {res.text}")
+    requests.post(url, json=payload, headers=headers)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
