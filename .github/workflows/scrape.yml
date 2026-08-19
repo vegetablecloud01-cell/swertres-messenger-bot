@@ -5,7 +5,7 @@ on:
     # Runs at 6:05 AM, 9:05 AM, and 1:05 PM UTC
     # This matches 2:05 PM, 5:05 PM, and 9:05 PM Philippine Standard Time (PHT)
     - cron: '5 6,9,13 * * *'
-  workflow_dispatch: # This adds a button so you can test run it manually
+  workflow_dispatch: # Allows manual run inside GitHub UI
 
 jobs:
   scrape:
