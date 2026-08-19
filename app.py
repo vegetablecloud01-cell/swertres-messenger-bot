@@ -49,12 +49,13 @@ def send_lotto_results(recipient_id):
         lotto_data = response.json()
         
         reply_text = (
-            f"🎯 Swertres (3D Lotto) Results today:\n\n"
-            f"🕒 11:00 AM: {lotto_data.get('11am', 'No result')}\n"
-            f"🕒 4:00 PM: {lotto_data.get('4pm', 'No result')}\n"
-            f"🕒 9:00 PM: {lotto_data.get('9pm', 'No result')}\n\n"
-            f"Disclaimer: Always cross-verify combinations with official PCSO channels."
-        )
+    f"🎯 Swertres (3D Lotto) Results today:\n\n"
+    f"🕒 2:00 PM: {lotto_data.get('2pm', 'No result')}\n"
+    f"🕒 5:00 PM: {lotto_data.get('5pm', 'No result')}\n"
+    f"🕒 9:00 PM: {lotto_data.get('9pm', 'No result')}\n\n"
+    f"Disclaimer: Always cross-verify combinations with official PCSO channels."
+)
+
     except Exception:
         reply_text = "Sorry, I am temporarily unable to fetch the live lotto results. Please try again later!"
 
