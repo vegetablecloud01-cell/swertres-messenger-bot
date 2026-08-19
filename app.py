@@ -9,7 +9,7 @@ app = Flask(__name__)
 VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "MY_SECURE_TOKEN_123")
 PAGE_ACCESS_TOKEN = os.environ.get("PAGE_ACCESS_TOKEN")
 # Replace with your actual public repository raw JSON link
-GITHUB_JSON_URL = "https://githubusercontent.com"
+GITHUB_JSON_URL = "https://raw.githubusercontent.com/vegetablecloud01-cell/swertres-messenger-bot/refs/heads/main/results.json"
 
 @app.route('/', methods=['GET'])
 def verify():
