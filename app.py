@@ -9,7 +9,7 @@ VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "MY_SECURE_TOKEN_123")
 PAGE_ACCESS_TOKEN = os.environ.get("PAGE_ACCESS_TOKEN")
 # ⚠️ Ensure your real raw JSON link from your previous message is pasted here!
 # FIXED: Make sure the word "raw." is added at the very beginning of the address!
-GITHUB_JSON_URL = "https://githubusercontent.com"
+GITHUB_JSON_URL = "https://raw.githubusercontent.com/vegetablecloud01-cell/swertres-messenger-bot/refs/heads/main/results.json"
 
 
 @app.route('/', methods=['GET'])
