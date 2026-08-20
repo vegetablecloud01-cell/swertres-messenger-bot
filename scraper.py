@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 def scrape_swertres():
     # Updated source endpoint to the main landing domain
-    url = "https://philnews.ph/pcso-lotto-result/swertres-result/"
+    url = "https://philnews.ph"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
     # Base fallback structure
